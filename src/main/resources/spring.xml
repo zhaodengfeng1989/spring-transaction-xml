@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--suppress SpringFacetInspection -->
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx" xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/tx
+       http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/aop https://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <!--开启基于注解驱动的事务管理器-->
+    <!--<tx:annotation-driven transaction-manager="dataSourceTransactionManager"/>-->
+    <!--<context:component-scan base-package="com.zhaodf" />-->
+    <context:property-placeholder location="db.properties"/>
+    <bean class="com.alibaba.druid.pool.DruidDataSource" id="dataSource">
+        <property name="driverClassName" value="${jdbc.driverClassName}"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+    </bean>
+
+    <bean class="org.springframework.jdbc.datasource.DataSourceTransactionManager" id="transactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <bean class="org.springframework.jdbc.core.JdbcTemplate" id="jdbcTemplate">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <bean class="com.zhaodf.service.impl.EmpServiceImpl" id="empService">
+        <property name="empDao" ref="empDao"/>
+    </bean>
+    <bean class="com.zhaodf.dao.impl.EmpDaoImpl" id="empDao">
+        <property name="jdbcTemplate" ref="jdbcTemplate"/>
+    </bean>
+
+    <bean class="com.zhaodf.service.impl.LogServiceImpl" id="logService">
+        <property name="LogDao" ref="logDao"/>
+    </bean>
+    <bean class="com.zhaodf.dao.impl.LogDaoImpl" id="logDao">
+        <property name="jdbcTemplate" ref="jdbcTemplate"/>
+    </bean>
+
+    <aop:config>
+        <aop:pointcut id="pointcutExpression" expression="execution(* com.zhaodf.service.impl.*.*(..))"/>
+        <aop:advisor advice-ref="tx" pointcut-ref="pointcutExpression"/>
+    </aop:config>
+
+    <tx:advice id="tx">
+        <tx:attributes>
+            <!--可以使用通配符-->
+            <tx:method name="add*"/>
+            <tx:method name="update*"/>
+            <tx:method name="delete*"/>
+            <tx:method name="insert*"/>
+            <tx:method name="save*"/>
+            <tx:method name="sub*"/>
+            <tx:method name="get*" read-only="true" propagation="SUPPORTS"/>
+            <tx:method name="query*" read-only="true" propagation="SUPPORTS"/>
+        </tx:attributes>
+    </tx:advice>
+</beans>
